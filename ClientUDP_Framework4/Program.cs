@@ -23,7 +23,7 @@ namespace UdpSample
             Console.WriteLine("Размер пакета - 4 байт");
             ConsoleKeyInfo key;
             string rule = @"[0-9a-fA-F]";
-            List<string> mass_list = new List<string> { };
+            List<string> mass_list = new List<string> { };  
             int i_mass;
             try
             {
@@ -42,7 +42,7 @@ namespace UdpSample
                     while (true)
                     {
                         key = Console.ReadKey(true);
-                        if (Regex.IsMatch(key.KeyChar.ToString(), rule))// && readline.Length < 8)
+                        if (Regex.IsMatch(key.KeyChar.ToString(), rule) && readline.Length < 8)
                         {
                             readline += key.KeyChar;
                             Console.Write(key.KeyChar);
@@ -111,8 +111,8 @@ namespace UdpSample
                         }
                     }
                     mass_list.Add(readline);
-                    //byte[] read_byte = new byte[4];
-                    byte[] read_byte = new byte[readline.Length / 2 + readline.Length % 2];
+                    byte[] read_byte = new byte[4];
+                    //byte[] read_byte = new byte[readline.Length / 2 + readline.Length % 2];
                     try
                     {
                         for (int i = 0; i < readline.Length; i += 2)
