@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:LogErrors"
         mc:Ignorable="d"
-        Title="MainWindow" Height="120" Width="405" MinHeight="120" MinWidth="405">
+        Title="MainWindow" Height="120" Width="400" MinHeight="120" MinWidth="400">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition></RowDefinition>
@@ -13,14 +13,14 @@
             <RowDefinition></RowDefinition>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition></ColumnDefinition>
-            <ColumnDefinition></ColumnDefinition>
+            <ColumnDefinition Width="150"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Button x:Name="BtnVersion" Grid.Row="0" Content="Запрос версии" Click="BtnVersion_Click"/>
         <Button x:Name="BtnLogErrors" Grid.Row="1" Content="Запись журнала в файл" Click="BtnLogErrors_Click"/>
         <Button x:Name="BtnExit" Grid.Row="2" Content="Выход" Click="BtnExit_Click"/>
-        <TextBox x:Name="TbVersion" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Text="xxxx/xx/xx xx:xx:xx" FontSize="21" TextAlignment="Center"/>
-        <TextBox x:Name="TbLogErrors" Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" Text="LogErrors.csv" FontSize="21" TextAlignment="Center"/>
-        <TextBlock x:Name="TblErrors" Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="2" Text="" FontSize="12" />
+        <TextBox x:Name="TbVersion" Grid.Column="1" Grid.Row="0" Text="xxxx/xx/xx xx:xx:xx" FontSize="21" TextAlignment="Center"/>
+        <TextBox x:Name="TbLogErrors" Grid.Column="1" Grid.Row="1" Text="LogErrors.csv" FontSize="21" TextAlignment="Center"/>
+        <TextBlock x:Name="TblErrors" Grid.Column="1" Grid.Row="2" Text="" FontSize="12" />
     </Grid>
 </Window>

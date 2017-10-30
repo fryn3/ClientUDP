@@ -24,34 +24,37 @@ namespace LogErrors
     /// </summary>
     public partial class MainWindow : Window
     {
-        //public static MainWindow Instance { get; private set; } // тут будет форма
         private static IPAddress remoteIPAddress;
         private static int remotePort;
         private static int localPort;
 
         public static int Fl_btn_version { get; private set; }
         public static int Fl_btn_log_errors { get; private set; }
-        public event MethodContainer DoEvent;
+        UdpClient varUdpClient;
         public MainWindow()
         {
             InitializeComponent();
-            //Instance = this;
-            
             localPort = 2054;
             remotePort = 2054;
             Fl_btn_version = 0;
             Fl_btn_log_errors = 0;
             remoteIPAddress = IPAddress.Parse("192.168.1.163");
-            //Thread tRec = new Thread(new ThreadStart(Receiver));
-            //tRec.Start();
+            varUdpClient = new UdpClient(localPort);
         }
 
-        private void BtnVersion_Click(object sender, RoutedEventArgs e)
+        private async void BtnVersion_Click(object sender, RoutedEventArgs e)
         {
-            byte[] datagram = { 0xA0, 0x00, 0x00, 0x00 };
-            Fl_btn_version = 1;
+            BtnLogErrors.IsEnabled = false;
+            byte[] datagram = { 0xA0 };
             Send(datagram);
-            TbVersion.Text = Encoding.UTF8.GetString(ReceiverR());
+            if (Fl_btn_version == 0 && Fl_btn_log_errors == 0)
+            {
+                Fl_btn_version = 1;
+                byte[] r = await ReceiverAsync();
+                TbVersion.Text = Encoding.UTF8.GetString(r);
+                Fl_btn_version = 0;
+                BtnLogErrors.IsEnabled = true;
+            }
         }
 
         private void BtnExit_Click(object sender, RoutedEventArgs e)    // закрытие окна
@@ -59,51 +62,64 @@ namespace LogErrors
             Close();
         }
 
-        private void BtnLogErrors_Click(object sender, RoutedEventArgs e)
+        private async void BtnLogErrors_Click(object sender, RoutedEventArgs e)
         {
-            Fl_btn_log_errors = 1;
             BtnVersion.IsEnabled = false;
-        }
-
-        public void Receiver()
-        {
-            DoEvent += Message;
-            //try
-            //{
-            UdpClient receivingUdpClient = new UdpClient(localPort);
-            IPEndPoint RemoteIpEndPoint = null;
-            while (true)
+            byte[][] r = new byte[8][];
+            Fl_btn_log_errors++;
+            if (Fl_btn_log_errors > 1)
             {
-                byte[] receiveBytes = receivingUdpClient.Receive(ref RemoteIpEndPoint);
-                DoEvent(receiveBytes);
-                break;
+                byte[] datagram = { 0xA0 };
+                await Task.Delay(1000);
+                Send(datagram);
+                await Task.Delay(1000);
             }
-            //}
-            //catch (Exception ex)
-            //{
-            //    MessageBox.Show("Возникло исключение: " + ex.ToString() + "\n  " + ex.Message);
-            //}
-
-        }
-        public byte[] ReceiverR()
-        {
-            UdpClient receivingUdpClient = new UdpClient(localPort);
-            IPEndPoint RemoteIpEndPoint = null;
-            while (true)
+            for (byte i = 0; i < 8; i++)
             {
-                byte[] receiveBytes = receivingUdpClient.Receive(ref RemoteIpEndPoint);
+                byte[] datagram = { 0xA7, i };
+                Send(datagram);
+                r[i] = await ReceiverAsync();
+                if (Fl_btn_log_errors > 1)
+                {
+                    Fl_btn_log_errors--;
+                    return;
+                }
+                TbLogErrors.Text = i.ToString();
+            }
+            using (FileStream fstream = new FileStream(@"..\LogErrors.hex", FileMode.OpenOrCreate))
+            {
+                for (int i = 0; i < r.Length; i++)
+                {
+                    fstream.Write(r[i], 0, r[i].Length);
+                }
+            }
+            BtnVersion.IsEnabled = true;
+            TbLogErrors.Text = "Done!";
+            Fl_btn_log_errors--;
+        }
+
+        public byte[] Receiver()
+        {
+            //using (UdpClient receivingUdpClient = new UdpClient(localPort))
+            //{
+                IPEndPoint RemoteIpEndPoint = null;
+                byte[] receiveBytes = varUdpClient.Receive(ref RemoteIpEndPoint);
                 return receiveBytes;
-            }
+            //}
+        }
+        Task<byte[]> ReceiverAsync()
+        {
+            return Task.Run(() => Receiver());
         }
 
-        private static void Send(byte[] datagram)
+        private void Send(byte[] datagram)
         {
-            UdpClient sender = new UdpClient();
+            //UdpClient sender = new UdpClient();
             IPEndPoint endPoint = new IPEndPoint(remoteIPAddress, remotePort);
 
             try
             {
-                sender.Send(datagram, datagram.Length, endPoint);
+                varUdpClient.SendAsync(datagram, datagram.Length, endPoint);
             }
             catch (Exception ex)
             {
@@ -111,7 +127,7 @@ namespace LogErrors
             }
             finally
             {
-                sender.Close();
+                //varUdpClient.Close();
             }
         }
 
