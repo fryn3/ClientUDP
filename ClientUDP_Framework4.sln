@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26923.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientUDP_Framework4", "ClientUDP_Framework4\ClientUDP_Framework4.csproj", "{E684B5C2-336E-430C-A687-623ED97699B4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogErrors", "LogErrors\LogErrors.csproj", "{1BA62A2D-BA1B-4D76-B96A-BED73875044C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +17,15 @@ Global
 		{E684B5C2-336E-430C-A687-623ED97699B4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E684B5C2-336E-430C-A687-623ED97699B4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E684B5C2-336E-430C-A687-623ED97699B4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BA62A2D-BA1B-4D76-B96A-BED73875044C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BA62A2D-BA1B-4D76-B96A-BED73875044C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BA62A2D-BA1B-4D76-B96A-BED73875044C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BA62A2D-BA1B-4D76-B96A-BED73875044C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7AC555A1-7D4D-4636-9AC3-76A09C07B142}
 	EndGlobalSection
 EndGlobal
