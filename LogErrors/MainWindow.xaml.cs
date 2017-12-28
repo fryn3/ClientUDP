@@ -67,26 +67,27 @@ namespace LogErrors
             BtnVersion.IsEnabled = false;
             byte[][] r = new byte[8][];
             Fl_btn_log_errors++;
-            if (Fl_btn_log_errors > 1)
+            while (Fl_btn_log_errors > 1)
             {
                 byte[] datagram = { 0xA0 };
-                await Task.Delay(1000);
+                await Task.Delay(100);
                 Send(datagram);
-                await Task.Delay(1000);
+                await Task.Delay(100);
             }
             for (byte i = 0; i < 8; i++)
             {
-                byte[] datagram = { 0xA7, i };
+                byte[] datagram = { 0xA8, i };
                 Send(datagram);
                 r[i] = await ReceiverAsync();
-                if (Fl_btn_log_errors > 1)
+                if(Fl_btn_log_errors > 1)
                 {
                     Fl_btn_log_errors--;
                     return;
                 }
                 TbLogErrors.Text = i.ToString();
+                await Task.Delay(10);
             }
-            using (FileStream fstream = new FileStream(@"..\LogErrors.hex", FileMode.OpenOrCreate))
+            using (FileStream fstream = new FileStream(@"..\LogErrors.bin", FileMode.OpenOrCreate))
             {
                 for (int i = 0; i < r.Length; i++)
                 {
@@ -94,18 +95,24 @@ namespace LogErrors
                 }
             }
             BtnVersion.IsEnabled = true;
+            //using (FileStream fstream = File.OpenRead(@"\LogErrors.hex"))
+            //{
+            //    byte[] array = new byte[fstream.Length];
+            //    fstream.Read(array, 0, array.Length);
+            //    using (FileStream csv_file = new FileStream(@"\LogErrors.csv", FileMode.OpenOrCreate))
+            //    {
+
+            //    }
+            //}
             TbLogErrors.Text = "Done!";
             Fl_btn_log_errors--;
         }
 
         public byte[] Receiver()
         {
-            //using (UdpClient receivingUdpClient = new UdpClient(localPort))
-            //{
-                IPEndPoint RemoteIpEndPoint = null;
-                byte[] receiveBytes = varUdpClient.Receive(ref RemoteIpEndPoint);
-                return receiveBytes;
-            //}
+            IPEndPoint RemoteIpEndPoint = null;
+            byte[] receiveBytes = varUdpClient.Receive(ref RemoteIpEndPoint);
+            return receiveBytes;
         }
         Task<byte[]> ReceiverAsync()
         {
@@ -114,9 +121,7 @@ namespace LogErrors
 
         private void Send(byte[] datagram)
         {
-            //UdpClient sender = new UdpClient();
             IPEndPoint endPoint = new IPEndPoint(remoteIPAddress, remotePort);
-
             try
             {
                 varUdpClient.SendAsync(datagram, datagram.Length, endPoint);
@@ -124,10 +129,6 @@ namespace LogErrors
             catch (Exception ex)
             {
                 Console.WriteLine("Возникло исключение: " + ex.ToString() + "\n  " + ex.Message);
-            }
-            finally
-            {
-                //varUdpClient.Close();
             }
         }
 
