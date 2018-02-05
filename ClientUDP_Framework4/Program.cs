@@ -20,15 +20,15 @@ namespace UdpSample
         [STAThread]
         static void Main(string[] args)
         {
-            Console.WriteLine("Размер пакета - 4 байт");
+//            Console.WriteLine("Размер пакета - 4 байт");
             ConsoleKeyInfo key;
             string rule = @"[0-9a-fA-F]";
             List<string> mass_list = new List<string> { };  
             int i_mass;
             try
             {
-                localPort = 2054;
-                remotePort = 2054;
+                localPort = 45454;
+                remotePort = 45454;
                 
                 remoteIPAddress = IPAddress.Parse("192.168.1.163");
                 
@@ -42,7 +42,7 @@ namespace UdpSample
                     while (true)
                     {
                         key = Console.ReadKey(true);
-                        if (Regex.IsMatch(key.KeyChar.ToString(), rule) && readline.Length < 8)
+                        if (Regex.IsMatch(key.KeyChar.ToString(), rule) /*&& readline.Length < 8*/)
                         {
                             readline += key.KeyChar;
                             Console.Write(key.KeyChar);
@@ -111,8 +111,8 @@ namespace UdpSample
                         }
                     }
                     mass_list.Add(readline);
-                    byte[] read_byte = new byte[4];
-                    //byte[] read_byte = new byte[readline.Length / 2 + readline.Length % 2];
+                    //byte[] read_byte = new byte[4];
+                    byte[] read_byte = new byte[readline.Length / 2 + readline.Length % 2];
                     try
                     {
                         for (int i = 0; i < readline.Length; i += 2)
@@ -192,7 +192,7 @@ namespace UdpSample
                 {
                     byte[] receiveBytes = receivingUdpClient.Receive(ref RemoteIpEndPoint);
                     Console.ForegroundColor = ConsoleColor.Green;
-                    Console.Write("\n\tMDR:\t");
+                    Console.Write("\n"+ receiveBytes.Length + "\tMDR:\t");
                     foreach (byte i in receiveBytes)
                         Console.Write("0x{0,2:X2} ", i);
                     Console.WriteLine();

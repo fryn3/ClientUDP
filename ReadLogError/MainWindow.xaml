@@ -1,0 +1,29 @@
+﻿<Window x:Class="ReadLogError.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ReadLogError"
+        mc:Ignorable="d"
+        Title="Get LogError" Height="200" Width="500" MinHeight="160" MinWidth="500">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+            <RowDefinition></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <Button x:Name="BtnVersion" Grid.Row="0" Content="Запрос версии МК" Click="BtnVersion_Click"/>
+        <Button x:Name="BtnVersionFPGA" Grid.Row="1" Content="Запрос версии ПЛИС" Click="BtnVersionFPGA_Click"/>
+        <Button x:Name="BtnLogErrors" Grid.Row="2" Content="Запись журнала в файл" Click="BtnLogErrors_Click"/>
+        <Button x:Name="BtnLogClear" Grid.Row="3" Content="Очистка журнала" Click="BtnLogClear_Click"/>
+        <TextBox x:Name="TbVersion" Grid.Column="1" Grid.Row="0" Text="xxxx/xx/xx xx:xx:xx" FontSize="21" TextAlignment="Center"/>
+        <TextBox x:Name="TbVersionFpga" Grid.Column="1" Grid.Row="1" Text="" FontSize="21" TextAlignment="Center"/>
+        <TextBox x:Name="TbLogErrors" Grid.Column="1" Grid.Row="2" Text="LogErrors.csv" FontSize="21" TextAlignment="Center"/>
+        <TextBox x:Name="TbLogClear" Grid.Column="1" Grid.Row="3" FontSize="21" TextAlignment="Center"/>
+    </Grid>
+</Window>

@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace LogErrors.Properties
+namespace ReadLogError.Properties
 {
 
 
