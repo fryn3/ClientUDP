@@ -51,7 +51,6 @@ namespace ReadLogError
             btn.Add(BtnVersionFPGA);
             btn.Add(BtnLogErrors);
             btn.Add(BtnLogClear);
-            //            TbVersion.Text = Properties.VersionInfo.BuildDate.ToString();
         }
 
         private async void BtnVersion_Click(object sender, RoutedEventArgs e)
@@ -83,25 +82,7 @@ namespace ReadLogError
                 byte[] r = await ReceiverAsync();
                 r = r.Skip(1).Take(r.Length - 1).ToArray();
                 buildFpga = BitConverter.ToUInt32(r, 0);
-                TbVersionFpga.Text = string.Format("0x{0,8:X8} ", buildFpga);
-                TbVersionFpga.Text += string.Format("{0:hh:mm:ss} {0:dd}/{0:MM}/{0:yyyy}", WorkWithLogs.fpga_version(buildFpga));
-                flBtnBusy--;
-                btn.ForEach(x => x.IsEnabled = true);
-            }
-        }
-
-        private async void BtnLogClear_Click(object sender, RoutedEventArgs e)
-        {
-            btn.ForEach(x => x.IsEnabled = false);
-            BtnLogClear.IsEnabled = true;
-            byte[] datagram = { 0xA9 };
-            Send(datagram);
-            if (flBtnBusy == 0)
-            {
-                flBtnBusy++;
-                byte[] r = await ReceiverAsync();
-                if (r.Length == 2 && r[0] == 0xA9 && r[1] == 0x55)
-                    TbLogClear.Text = "Done!";
+                TbVersionFpga.Text = string.Format("{0:hh:mm:ss} {0:dd}/{0:MM}/{0:yyyy}", WorkWithLogs.FpgaVersion(buildFpga));
                 flBtnBusy--;
                 btn.ForEach(x => x.IsEnabled = true);
             }
@@ -109,6 +90,10 @@ namespace ReadLogError
 
         private async void BtnLogErrors_Click(object sender, RoutedEventArgs e)
         {
+            BtnVersion_Click(sender, e);
+            await Task.Delay(100);
+            BtnVersionFPGA_Click(sender, e);
+            await Task.Delay(100);
             btn.ForEach(x => x.IsEnabled = false);
             BtnLogErrors.IsEnabled = true;
             byte[][] ethRx = new byte[8][];
@@ -154,7 +139,25 @@ namespace ReadLogError
             DissLogs logs = new DissLogs(fileOutBin);
             WorkWithLogs.WriteToCsv(logs, buildFpga, Properties.VersionInfo.BuildDate, buildMc);
             Process.Start(logs.Name + ".csv");
+            TbLogErrors.Text = "Create LogErrors.csv!";
             flBtnBusy--;
+        }
+
+        private async void BtnLogClear_Click(object sender, RoutedEventArgs e)
+        {
+            btn.ForEach(x => x.IsEnabled = false);
+            BtnLogClear.IsEnabled = true;
+            byte[] datagram = { 0xA9 };
+            Send(datagram);
+            if (flBtnBusy == 0)
+            {
+                flBtnBusy++;
+                byte[] r = await ReceiverAsync();
+                if (r.Length == 2 && r[0] == 0xA9 && r[1] == 0x55)
+                    TbLogClear.Text = "Done!";
+                flBtnBusy--;
+                btn.ForEach(x => x.IsEnabled = true);
+            }
         }
 
         public byte[] Receiver()

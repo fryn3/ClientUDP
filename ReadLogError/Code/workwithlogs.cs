@@ -10,6 +10,7 @@ namespace Diss
 {
     public class DissLogs
     {
+        #region Log, LogError, LogTime
         public abstract class Log
         {
             // Корректная запись true.
@@ -18,20 +19,25 @@ namespace Diss
             public uint Total40ms { get; protected set; }
             // Кол-во включений МПР
             public byte TotalOn { get; protected set; }
-
+            // CS
             public byte CS { get; protected set; }
             // "Сырые" данные для парсинга
             public byte[] Raw { get; protected set; }
             // Пустой массив  true.
             public bool IsEmpty => (Raw == null || Raw.All(b => b == 0xFF));
-//            public bool IsEmpty => Raw?.All(x => x == 0xFF) ?? true;
             // Возвращает время в часах
             public uint GetHours { get { return Total40ms / 90000; } }
             // Возвращает время в минутах
             public uint GetMinutes { get { return (Total40ms % 90000) / 1500; } }
             // Возвращает время в секундах с округлением.
-            public uint GetSeconds { get { return (uint)Math.Round((decimal)((Total40ms % 1500) / 25),
-                                     MidpointRounding.AwayFromZero); } }
+            public uint GetSeconds
+            {
+                get
+                {
+                    return (uint)Math.Round((decimal)((Total40ms % 1500) / 25),
+              MidpointRounding.AwayFromZero);
+                }
+            }
 
             protected Log()
             {
@@ -40,46 +46,61 @@ namespace Diss
                 TotalOn = 0;
             }
 
-            public abstract int GetData(byte[] raw);
+            public abstract int SetData(byte[] raw);
         }
         // Класс для работы с записями отказов.
         public class LogError : Log
         {
-            public static readonly int Size = 8;
-            public static string Header
+            // Класс для хранение описаний ошибки.
+            public class LogNote
             {
-                get
+                public byte Code { get; private set; }
+                public string Name { get; private set; }
+                public string Description { get; private set; }
+                internal LogNote(byte code, string name, string description)
                 {
-                    return
-              "Код ошибки;Имя;Описание ошибки\n" +
-              "0x01;LOG_ERR_IP;Ошибка питания\n" +
-              "0x02;LOG_ERR_CNTRL2_IS_0;мощн усилителя в нуле\n" +
-              "0x03;LOG_ERR_CNTRL2_IS_1;мощн усилителя в единице\n" +
-              "0x04;LOG_ERR_CNTRL3;превышение тока\n" +
-              "0x05;LOG_ERR_TD;температурный датчик\n" +
-              "0x06;LOG_ERR_FPGA;не прошел стартовый контроль\n" +
-              "0x07;LOG_ERR_SRAM;не прошел стартовый контроль\n" +
-              "0x08;LOG_ERR_FLASH;ошибка при записи/чтении\n" +
-              "0x09;LOG_ERR_ARINC;\n" +
-              "0x0a;LOG_ERR_N_RAY;номер луча\n" +
-              "0x21;LOG_MEM_MISS_INF;потерян сигнал\n" +
-              "0x22;LOG_MEM_START_INIT;вход в стартовый контроль\n" +
-              "0x23;LOG_MEM_INH_TEST;вход в расширенный контроль\n" +
-              "0x24;LOG_MEM_SILENCE;выключение СВЧМ\n";
+                    Code = code;
+                    Name = name;
+                    Description = description;
+                }
+                internal const String LogNoteHeader = "Код ошибки;Имя;Описание ошибки";
+                public override string ToString()
+                {
+                    return string.Format("0x{0, 2:X2};{1};{2}", Code, Name, Description);
                 }
             }
+            public const int Size = 8;
             public byte Status { get; private set; }
             public byte Error { get; private set; }
-
+            // Описание всех ошибок.
+            static public List<LogNote> logNotes { get; private set; }
             public LogError() : base()
             {
                 Status = 0;
                 Error = 0;
+                if (logNotes == null)
+                {
+                    logNotes = new List<LogNote>();
+                    logNotes.Add(new LogNote(0x01, "LOG_ERR_IP", "Ошибка питания"));
+                    logNotes.Add(new LogNote(0x02, "LOG_ERR_CNTRL2_IS_0", "мощн усилителя в нуле"));
+                    logNotes.Add(new LogNote(0x03, "LOG_ERR_CNTRL2_IS_1", "мощн усилителя в единице"));
+                    logNotes.Add(new LogNote(0x04, "LOG_ERR_CNTRL3", "превышение тока"));
+                    logNotes.Add(new LogNote(0x05, "LOG_ERR_TD", "температурный датчик"));
+                    logNotes.Add(new LogNote(0x06, "LOG_ERR_FPGA", "не прошел стартовый контроль"));
+                    logNotes.Add(new LogNote(0x07, "LOG_ERR_SRAM", "не прошел стартовый контроль"));
+                    logNotes.Add(new LogNote(0x08, "LOG_ERR_FLASH", "ошибка при записи/чтении"));
+                    logNotes.Add(new LogNote(0x09, "LOG_ERR_ARINC", "none"));
+                    logNotes.Add(new LogNote(0x0a, "LOG_ERR_N_RAY", "номер луча"));
+                    logNotes.Add(new LogNote(0x21, "LOG_MEM_MISS_INF", "потерян сигнал"));
+                    logNotes.Add(new LogNote(0x22, "LOG_MEM_START_INIT", "вход в стартовый контроль"));
+                    logNotes.Add(new LogNote(0x23, "LOG_MEM_INH_TEST", "вход в расширенный контроль"));
+                    logNotes.Add(new LogNote(0x24, "LOG_MEM_SILENCE", "выключение СВЧМ"));
+                }
             }
 
-            public LogError(byte[] raw) : this() => GetData(raw);
-
-            public override int GetData(byte[] raw)
+            public LogError(byte[] raw) : this() => SetData(raw);
+            // Парсинг байт одной записи.
+            public override int SetData(byte[] raw)
             {
                 if (raw.Length != Size)
                     return 1;
@@ -122,22 +143,38 @@ namespace Diss
                 else
                     return "null";
             }
+            // Имя ошибки.
+            public string ErrorName
+            {
+                get
+                {
+                    return logNotes.FirstOrDefault(log => log.Code == Error).Name;
+                }
+            }
+            // Описание ошибки.
+            public string ErrorDescription
+            {
+                get
+                {
+                    return logNotes.FirstOrDefault(log => log.Code == Error).Description;
+                }
+            }
         }
         // Класс для работы с записями времени наработки.
         public class LogTime : Log
         {
-            public static readonly int Size = 6;
+            public const int Size = 6;
 
             public LogTime() : base() { }
 
-            public LogTime(byte[] raw) : this() => GetData(raw);
+            public LogTime(byte[] raw) : this() => SetData(raw);
 
             public LogTime(uint total40ms) : base()
             {
                 Total40ms = total40ms;
             }
 
-            public override int GetData(byte[] raw)
+            public override int SetData(byte[] raw)
             {
                 if (raw.Length != Size)
                     return 1;
@@ -168,17 +205,27 @@ namespace Diss
                 else
                     return "null";
             }
+
+            public string ToString(bool fullLog)
+            {
+                string s = ToString();
+                if (fullLog)
+                    s += ";" + TotalOn;
+                return s;
+            }
         }
+        #endregion
+        #region Поля
         // Размер flash памяти.
-        public static readonly int SizeFile = 8192;
+        public const int SizeFile = 8192;
         // Количество запяси отказов.
-        public static readonly int CountLogError = 1000;
+        public const int CountLogError = 1000;
         // Размер занимаемый журналом отказа. Следом идет журнал наработок.
-        public static readonly int SizeAllLogError = CountLogError * LogError.Size;
+        public const int SizeAllLogError = CountLogError * LogError.Size;
         // Количество записей времени наработки.
-        public static readonly int CountLogTime = 10;
+        public const int CountLogTime = 10;
         // Размер занимаемый журнала времени наработки.
-        public static readonly int SizeAllLogTime = CountLogTime * LogTime.Size;
+        public const int SizeAllLogTime = CountLogTime * LogTime.Size;
         // Может быть использована ф-цией WriteToCsv для выходного файла.
         // Имя задается без формата. По умолчанию LogErrors.
         public string Name { get; protected set; }
@@ -188,6 +235,8 @@ namespace Diss
         public List<LogTime> Times { get; protected set; }
         // Счетчик пустых записей. 
         public uint CountEmpty { get; protected set; }
+        #endregion
+        #region Конструкторы и методы
         // Возвращает максимальную запись времени наработки.
         public LogTime GetMaxTimes()
         {
@@ -200,70 +249,22 @@ namespace Diss
             return logMax;
         }
         // Конструктор, принимает полное имя файла, для парсинга.
-        public DissLogs(string fullFineName)
+        public DissLogs(string fullFileName)
         {
             CountEmpty = 0;
-            try
+            var f = File.OpenRead(fullFileName);
+            if (f.Length != SizeFile)
             {
-                var f = File.OpenRead(fullFineName);
-                if (f.Length != SizeFile)
-                {
-                    MessageBox.Show("Размер файла не совпадает.\n"
-                        + "файл: " + fullFineName + ": " + f.Length + " byte\n"
-                        + "Должно быть: " + SizeFile + " byte");
-                    return;
-                }
-                using (var fstream = new BinaryReader(f))
-                {
-                    Name = fullFineName.Substring(0, fullFineName.Length - 4);
-                    byte[] binArray = new byte[SizeFile];
-                    fstream.Read(binArray, 0, binArray.Length);
+                throw new Exception("Размер файла не совпадает. "
+                    + "Файл: " + fullFileName + ": " + f.Length + " byte. "
+                    + "Должно быть: " + SizeFile + " byte.");
+            }
+            using (var fstream = new BinaryReader(f))
+            {
+                Name = fullFileName.Substring(0, fullFileName.Length - 4);
+                byte[] binArray = new byte[SizeFile];
+                fstream.Read(binArray, 0, binArray.Length);
 
-                    Errors = new List<LogError>();
-                    for (var i = 0; i < CountLogError; i++)
-                    {
-                        LogError t = new LogError(binArray
-                                                        .Skip(i * LogError.Size)
-                                                        .Take(LogError.Size)
-                                                        .ToArray());
-                        if (t.IsEmpty)
-                            CountEmpty++;
-                        else
-                            Errors.Add(t);
-                    }
-                    Times = new List<LogTime>();
-                    for (var i = 0; i < CountLogTime; i++)
-                    {
-                        LogTime t = new LogTime(binArray
-                                                    .Skip(SizeAllLogError + i * LogTime.Size)
-                                                    .Take(LogTime.Size)
-                                                    .ToArray());
-                        if (t.IsGood)
-                            Times.Add(t);
-                    }
-                }
-                Errors = Errors.OrderBy(o => o.Total40ms).ToList();
-                Times = Times.OrderBy(o => o.Total40ms).ToList();
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.Message);
-            }
-        }
-        // Конструктор, принимает массив byte и имя без формата. Имя может
-        // быть использована в ф-ции WriteToCsv.
-        public DissLogs(byte[] binArray, string fileOutName = "LogErrors")
-        {
-            try
-            {
-                if (binArray.Length != SizeFile)
-                {
-                    MessageBox.Show("Размер массива не совпадает.\n"
-                                + "Для массива: " + binArray.Length + "\n"
-                                + "Должна быть: " + SizeFile + "");
-                    return;
-                }
-                Name = fileOutName;
                 Errors = new List<LogError>();
                 for (var i = 0; i < CountLogError; i++)
                 {
@@ -286,61 +287,106 @@ namespace Diss
                     if (t.IsGood)
                         Times.Add(t);
                 }
-                Errors = Errors.OrderBy(o => o.Total40ms).ToList();
-                Times = Times.OrderBy(o => o.Total40ms).ToList();
             }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.Message);
-            }
+            Errors = Errors.OrderBy(o => o.Total40ms).ToList();
+            Times = Times.OrderBy(o => o.Total40ms).ToList();
         }
+        // Конструктор, принимает массив byte и имя без формата. Имя может
+        // быть использована в ф-ции WriteToCsv.
+        public DissLogs(byte[] binArray, string fileOutName = "LogErrors")
+        {
+            if (binArray.Length != SizeFile)
+            {
+                throw new Exception("Размер массива не совпадает.\n"
+                            + "Для массива: " + binArray.Length + "\n"
+                            + "Должна быть: " + SizeFile + "");
+            }
+            Name = fileOutName;
+            Errors = new List<LogError>();
+            for (var i = 0; i < CountLogError; i++)
+            {
+                LogError t = new LogError(binArray
+                                                .Skip(i * LogError.Size)
+                                                .Take(LogError.Size)
+                                                .ToArray());
+                if (t.IsEmpty)
+                    CountEmpty++;
+                else
+                    Errors.Add(t);
+            }
+            Times = new List<LogTime>();
+            for (var i = 0; i < CountLogTime; i++)
+            {
+                LogTime t = new LogTime(binArray
+                                            .Skip(SizeAllLogError + i * LogTime.Size)
+                                            .Take(LogTime.Size)
+                                            .ToArray());
+                if (t.IsGood)
+                    Times.Add(t);
+            }
+            Errors = Errors.OrderBy(o => o.Total40ms).ToList();
+            Times = Times.OrderBy(o => o.Total40ms).ToList();
+        }
+        #endregion
     }
     // Статический класс для работы с DissLogs.
     public static class WorkWithLogs
     {
-        private static String FormatHeader =
+        private static String formatHeader =
             "Дата и время чтение журнала: {0:hh:mm:ss} {0:dd}/{0:MM}/{0:yyyy}\n" +
             "Версия ПО для ПК: {1:hh:mm:ss} {1:dd}/{1:MM}/{1:yyyy}\n" +
             "Версия ПО для МПР: {2}\n" +
-            "Версия ПО для ПЛИС: {3:hh:mm:ss} {3:dd}/{3:MM}/{3:yyyy}\n" +
-            "Время наработки МПР: {4}, кол-во включений: {5}\n" +
-            "{6}\n\n" +
-            "Всего прочитано записей: {7}, корректных {8}, свободных {9}, ошибочных {10}\n" +
+            "Версия ПО для ПЛИС: {3}\n" +
+            "Время наработки МПР: {4}, кол-во включений: {5}\n";
+        private static String logErrorHeader =
+            "Всего прочитано записей: {0}, корректных {1}, свободных {2}, ошибочных {3}\n" +
             "LogError\nNum;Time;CountOn;Status;Error;CS\n";
+
         // Ф-ция для записи DissLogs в файл csv.
         // DissLogs logs - класс, где храняться записи.
         // string fullFileNameOut - полное имя выходного файла.
         // uint buildFpga - версия прошивки ПЛИС в кодированном виде.
         // DateTime buildPc - версия программы для ПК.
-        // string buildMc - версия прошивки МПР/
-        public static int WriteToCsv(DissLogs logs, string fullFileNameOut, uint buildFpga = 0x01234567,
-                                    DateTime buildPc = new DateTime(), string buildMc = "0")
+        // string buildMc - версия прошивки МПР.
+        // bool writeFullTime - выведет все записи наработки.   // для Ульяновска надо сделать false
+        public static int WriteToCsv(DissLogs logs, string fullFileNameOut, uint buildFpga = 0x0,
+                                    DateTime buildPc = new DateTime(), string buildMc = "0", bool writeFullTime = false)
         {
-            try
+            using (var fstream = new FileStream(fullFileNameOut, FileMode.Create))
             {
-                using (var fstream = new FileStream(fullFileNameOut, FileMode.Create))
+                byte[] array;
+                // Header
+                array = Encoding.Default.GetBytes(string.Format(formatHeader,
+                    DateTime.Now, buildPc, buildMc, strFpgaVersion(buildFpga),
+                    logs.GetMaxTimes().ToString(), logs.GetMaxTimes().TotalOn));
+                    fstream.Write(array, 0, array.Length);
+                // LogError Description
+                array = Encoding.Default.GetBytes(DissLogs.LogError.LogNote.LogNoteHeader + "\n");
+                fstream.Write(array, 0, array.Length);
+                foreach (var i in DissLogs.LogError.logNotes)
                 {
+                    array = Encoding.Default.GetBytes(i.ToString() + "\n");
+                    fstream.Write(array, 0, array.Length);
+                }
+                // Всего прочитано записей: {0}, корректных {1}, свободных {2}, ошибочных {3}\n
+                array = Encoding.Default.GetBytes(string.Format(logErrorHeader, DissLogs.CountLogError,
+                        DissLogs.CountLogError - (logs.CountEmpty + logs.Errors.Count(e => !e.IsGood)),
+                        logs.CountEmpty, logs.Errors.Count(e => !e.IsGood)));
+                fstream.Write(array, 0, array.Length);
+                // Вывод запись ошибок
+                for (int i = 0; i < logs.Errors.Count; i++)
+                {
+                    array = Encoding.Default.GetBytes((i + 1) + ";" + logs.Errors[i].ToString() + "\n");
+                    fstream.Write(array, 0, array.Length);
+                }
+                if (writeFullTime)
+                {
+                    foreach (var t in logs.Times)
                     {
-                        byte[] array = Encoding.Default.GetBytes(string.Format(FormatHeader,
-                            DateTime.Now, buildPc, buildMc, fpga_version(buildFpga),
-                            logs.GetMaxTimes().ToString(), logs.GetMaxTimes().TotalOn,
-                            DissLogs.LogError.Header, DissLogs.CountLogError,
-                            DissLogs.CountLogError - (logs.CountEmpty + logs.Errors.Count(e => !e.IsGood)),
-                            logs.CountEmpty, logs.Errors.Count(e => !e.IsGood)));
-                        fstream.Write(array, 0, array.Length);
-                    }
-                    //foreach (var er in logs.Errors)
-                    for (int i = 0; i < logs.Errors.Count; i++)
-                    {
-                        byte[] array = Encoding.Default.GetBytes((i + 1) + ";" + logs.Errors[i].ToString() + "\n");
+                        array = Encoding.Default.GetBytes(t.ToString(writeFullTime) + "\n");
                         fstream.Write(array, 0, array.Length);
                     }
                 }
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.Message);
-                return 1;
             }
             return 0;
         }
@@ -352,7 +398,7 @@ namespace Diss
             return WriteToCsv(logs, logs.Name + ".csv", buildFpga, buildPc, buildMc);
         }
         // Ф-ция перевода кодированной версии ПЛИС в DateTime.
-        public static DateTime fpga_version(uint id)
+        public static DateTime FpgaVersion(uint id)
         {
             uint true_id;
             ulong true_id_full;
@@ -408,6 +454,13 @@ namespace Diss
             dateTime = dateTime.AddSeconds(ts);
 
             return dateTime;
+        }
+        public static string strFpgaVersion(uint id)
+        {
+            if (id == 0)
+                return "";
+            else
+                return string.Format("{0:hh:mm:ss} {0:dd}/{0:MM}/{0:yyyy}", FpgaVersion(id));
         }
     }
 }
