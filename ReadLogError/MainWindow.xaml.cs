@@ -37,6 +37,7 @@ namespace ReadLogError
         private static uint buildFpga;
         private static string fileOutBin = @"LogErrors.bin";
         private static List<Button> btn;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -51,6 +52,17 @@ namespace ReadLogError
             btn.Add(BtnVersionFPGA);
             btn.Add(BtnLogErrors);
             btn.Add(BtnLogClear);
+        }
+
+        private void ShowMessage_Executed(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Горячие клавиши:\n" +
+                "Справка F1\n" +
+                "Запрос версии МК Ctrl+1\n" +
+                "Запрос версии ПЛИС Ctrl+2\n" +
+                "Запись журнала в файл Ctrl+3\n" +
+                "Очистка журнала Ctrl+4\n" +
+                "Выход Esc\n");
         }
 
         private async void BtnVersion_Click(object sender, RoutedEventArgs e)
@@ -184,6 +196,24 @@ namespace ReadLogError
                 Console.WriteLine("Возникло исключение: " + ex.ToString() + "\n  " + ex.Message);
             }
         }
-        
+
+        private void BtnExit_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
+        }
+    }
+
+    public static class UserCommands
+    {
+        static UserCommands()
+        {
+            // Можно прописать горячие клавиши по умолчанию
+            InputGestureCollection inputs = new InputGestureCollection();
+            inputs.Add(new KeyGesture(Key.S, ModifierKeys.Control, "Ctrl+S"));
+
+            SomeCommand = new RoutedUICommand("Some", "SomeCommand", typeof(UserCommands), inputs);
+        }
+
+        public static RoutedCommand SomeCommand { get; private set; }
     }
 }
