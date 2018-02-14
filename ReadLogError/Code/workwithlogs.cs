@@ -11,7 +11,7 @@ namespace Diss
     public class DissLogs
     {
         #region Log, LogError, LogTime
-        public abstract class Log
+        public abstract class Log 
         {
             // Корректная запись true.
             public bool IsGood { get; protected set; }
@@ -81,20 +81,24 @@ namespace Diss
                 if (logNotes == null)
                 {
                     logNotes = new List<LogNote>();
-                    logNotes.Add(new LogNote(0x01, "LOG_ERR_IP", "Ошибка питания"));
-                    logNotes.Add(new LogNote(0x02, "LOG_ERR_CNTRL2_IS_0", "мощн усилителя в нуле"));
-                    logNotes.Add(new LogNote(0x03, "LOG_ERR_CNTRL2_IS_1", "мощн усилителя в единице"));
-                    logNotes.Add(new LogNote(0x04, "LOG_ERR_CNTRL3", "превышение тока"));
-                    logNotes.Add(new LogNote(0x05, "LOG_ERR_TD", "температурный датчик"));
-                    logNotes.Add(new LogNote(0x06, "LOG_ERR_FPGA", "не прошел стартовый контроль"));
-                    logNotes.Add(new LogNote(0x07, "LOG_ERR_SRAM", "не прошел стартовый контроль"));
-                    logNotes.Add(new LogNote(0x08, "LOG_ERR_FLASH", "ошибка при записи/чтении"));
-                    logNotes.Add(new LogNote(0x09, "LOG_ERR_ARINC", "none"));
-                    logNotes.Add(new LogNote(0x0a, "LOG_ERR_N_RAY", "номер луча"));
-                    logNotes.Add(new LogNote(0x21, "LOG_MEM_MISS_INF", "потерян сигнал"));
-                    logNotes.Add(new LogNote(0x22, "LOG_MEM_START_INIT", "вход в стартовый контроль"));
-                    logNotes.Add(new LogNote(0x23, "LOG_MEM_INH_TEST", "вход в расширенный контроль"));
-                    logNotes.Add(new LogNote(0x24, "LOG_MEM_SILENCE", "выключение СВЧМ"));
+                    byte i = 0;
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_IP", "Ошибка питания"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_CNTRL2_IS_0", "не выставилось РК мощность усилителя"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_CNTRL2_IS_0_WOW", "неожидано мощность исчезла"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_CNTRL2_IS_1", "не выставилось РК мощность усилителя"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_CNTRL2_IS_1_WOW", "неожидано появилась мощность"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_CNTRL3", "превышение тока"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_TD", "температурный датчик"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_FPGA", "не прошел стартовый контроль"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_SRAM", "не прошел стартовый контроль"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_FLASH", "ошибка при записи/чтении"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_ARINC", "none"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_N_RAY", "номер луча"));
+                    i = 20;
+                    logNotes.Add(new LogNote(++i, "LOG_MEM_MISS_INF", "потерян сигнал"));
+                    logNotes.Add(new LogNote(++i, "LOG_MEM_START_INIT", "вход в стартовый контроль"));
+                    logNotes.Add(new LogNote(++i, "LOG_MEM_INH_TEST", "вход в расширенный контроль"));
+                    logNotes.Add(new LogNote(++i, "LOG_MEM_SILENCE", "выключение СВЧМ"));
                 }
             }
 
