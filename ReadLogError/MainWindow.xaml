@@ -5,13 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ReadLogError"
         mc:Ignorable="d"
-        Title="Get LogError" Height="200" Width="500" MinHeight="160" MinWidth="500">
-    <Window.InputBindings>
-        <KeyBinding Command="local:UserCommands.SomeCommand" Gesture="F1" />
-    </Window.InputBindings>
-    <Window.CommandBindings>
-        <CommandBinding Command="local:UserCommands.SomeCommand" Executed="ShowMessage_Executed" />
-    </Window.CommandBindings>
+        Title="ReadLogError" Height="300" Width="600" MinHeight="160" MinWidth="500">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition></RowDefinition>
@@ -22,18 +16,18 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="150"></ColumnDefinition>
             <ColumnDefinition Width="2*"></ColumnDefinition>
-            <ColumnDefinition Width="*" MaxWidth="200"></ColumnDefinition>
+            <ColumnDefinition Width="100"></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        
-        <Button x:Name="BtnVersion" Grid.Row="0" Content="Запрос версии МК" Click="BtnVersion_Click"/>
-        <Button x:Name="BtnVersionFPGA" Grid.Row="1" Content="Запрос версии ПЛИС" Click="BtnVersionFPGA_Click"/>
-        <Button x:Name="BtnLogErrors" Grid.Row="2" Content="Запись журнала в файл" Click="BtnLogErrors_Click"/>
-        <Button x:Name="BtnLogClear" Grid.Row="3" Content="Очистка журнала" Click="BtnLogClear_Click"/>
-        <Button x:Name="BtnExit" Grid.Row="0" Grid.Column="2" Grid.RowSpan="4" Content="Выход" Click="BtnExit_Click"/>
 
-        <TextBox x:Name="TbVersion" Grid.Column="1" Grid.Row="0" Text="xxxx/xx/xx xx:xx:xx" FontSize="21" TextAlignment="Center" IsReadOnly="True"/>
-        <TextBox x:Name="TbVersionFpga" Grid.Column="1" Grid.Row="1" Text="" FontSize="21" TextAlignment="Center" IsReadOnly="True"/>
-        <TextBox x:Name="TbLogErrors" Grid.Column="1" Grid.Row="2" Text="LogErrors.csv" FontSize="21" TextAlignment="Center" IsReadOnly="True"/>
-        <TextBox x:Name="TbLogClear" Grid.Column="1" Grid.Row="3" FontSize="21" TextAlignment="Center" IsReadOnly="True"/>
+        <Button x:Name="BtnVersion" Grid.Row="0" Content="Запрос версии МК" Click="BtnVersion_Click" FontSize="14" ToolTip="Alt+1"/>
+        <Button x:Name="BtnVersionFPGA" Grid.Row="1" Content="Запрос версии ПЛИС" Click="BtnVersionFPGA_Click" FontSize="14" ToolTip="Alt+2"/>
+        <Button x:Name="BtnLogErrors" Grid.Row="2" Content="Чтение журнала" Click="BtnLogErrors_Click" FontSize="14" ToolTip="Alt+3"/>
+        <Button x:Name="BtnLogClear" Grid.Row="3" Content="Очистка журнала" Click="BtnLogClear_Click" FontSize="14" ToolTip="Alt+4"/>
+        <Button x:Name="BtnExit" Grid.Row="0" Grid.Column="2" Grid.RowSpan="4" Content="Выход" Click="BtnExit_Click" FontSize="14" ToolTip="Esc"/>
+
+        <TextBox x:Name="TbVersion" Grid.Column="1" Grid.Row="0" Text="xxxx/xx/xx xx:xx:xx" FontSize="21" IsReadOnly="True" TextWrapping="Wrap"/>
+        <TextBox x:Name="TbVersionFpga" Grid.Column="1" Grid.Row="1" Text="" FontSize="21" IsReadOnly="True" TextWrapping="Wrap"/>
+        <TextBox x:Name="TbLogErrors" Grid.Column="1" Grid.Row="2" Text="LogErrors.csv" FontSize="21" IsReadOnly="True" TextWrapping="Wrap"/>
+        <TextBox x:Name="TbLogClear" Grid.Column="1" Grid.Row="3" FontSize="21" IsReadOnly="True" TextWrapping="Wrap"/>
     </Grid>
 </Window>

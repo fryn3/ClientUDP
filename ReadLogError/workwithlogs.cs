@@ -140,9 +140,9 @@ namespace Diss
                             GetHours, GetMinutes, GetSeconds, TotalOn,
                             Convert.ToString(Status, 2).PadLeft(8, '0'), Error);
                     else
-                        return string.Format("{0}:{1, 2:D2}:{2, 2:D2};{3};0b{4};0x{5,2:X2};{6}",
-                            GetHours, GetMinutes, GetSeconds, TotalOn,
-                            Convert.ToString(Status, 2).PadLeft(8, '0'), Error, "Bad");
+                        return string.Format("0x{0,2:x2} 0x{1,2:x2} 0x{2,2:x2} 0x{3,2:x2};" +
+                            "0x{4,2:X2};0b{5};0x{6,2:X2};0x{7,2:X2}",
+                            Raw[0], Raw[1], Raw[2], Raw[3], Raw[4], Raw[5], Raw[6], Raw[7]);
                 }
                 else
                     return "null";
@@ -256,10 +256,20 @@ namespace Diss
         public DissLogs(string fullFileName)
         {
             CountEmpty = 0;
-            var f = File.OpenRead(fullFileName);
+            FileStream f = null;
+            try
+            {
+                f = File.OpenRead(fullFileName);
+            }
+            catch
+            {
+                f?.Close();
+                throw new Exception("Не получилось открыть бинарный файл! "
+                    + "Файл: " + fullFileName);
+            }
             if (f.Length != SizeFile)
             {
-                throw new Exception("Размер файла не совпадает. "
+                throw new Exception("Размер бинарного файла не совпадает. "
                     + "Файл: " + fullFileName + ": " + f.Length + " byte. "
                     + "Должно быть: " + SizeFile + " byte.");
             }
@@ -292,6 +302,7 @@ namespace Diss
                         Times.Add(t);
                 }
             }
+            f.Close();
             Errors = Errors.OrderBy(o => o.Total40ms).ToList();
             Times = Times.OrderBy(o => o.Total40ms).ToList();
         }
@@ -343,7 +354,7 @@ namespace Diss
             "Версия ПО для ПЛИС: {3}\n" +
             "Время наработки МПР: {4}, кол-во включений: {5}\n";
         private static String logErrorHeader =
-            "Всего прочитано записей: {0}, корректных {1}, свободных {2}, ошибочных {3}\n" +
+            "Всего из {0} прочитанных записей: корректных {1}, некорректных {2} свободных {3}\n" +
             "LogError\nNum;Time;CountOn;Status;Error;CS\n";
 
         // Ф-ция для записи DissLogs в файл csv.
@@ -354,16 +365,48 @@ namespace Diss
         // string buildMc - версия прошивки МПР.
         // bool writeFullTime - выведет все записи наработки.   // для Ульяновска надо сделать false
         public static int WriteToCsv(DissLogs logs, string fullFileNameOut, uint buildFpga = 0x0,
-                                    DateTime buildPc = new DateTime(), string buildMc = "0", bool writeFullTime = false)
+                                    DateTime buildPc = new DateTime(), string buildMc = "", bool writeFullTime = false)
         {
-            using (var fstream = new FileStream(fullFileNameOut, FileMode.Create))
+            byte[] array;
+            FileStream fstream = null;
+            try
             {
-                byte[] array;
-                // Header
-                array = Encoding.Default.GetBytes(string.Format(formatHeader,
-                    DateTime.Now, buildPc, buildMc, strFpgaVersion(buildFpga),
-                    logs.GetMaxTimes().ToString(), logs.GetMaxTimes().TotalOn));
+                fstream = new FileStream(fullFileNameOut, FileMode.Create);
+            }
+            catch
+            {
+                throw new Exception("Не получилось создать/открыть csv-файл! "
+                    + "Файл: " + fullFileNameOut );
+            }
+            // Header
+            array = Encoding.Default.GetBytes(string.Format(formatHeader,
+                DateTime.Now, buildPc, buildMc, strFpgaVersion(buildFpga),
+                logs.GetMaxTimes().ToString(), logs.GetMaxTimes().TotalOn));
+                fstream.Write(array, 0, array.Length);
+            // Всего прочитано записей: {0}, корректных {1}, свободных {2}, ошибочных {3}\n
+            array = Encoding.Default.GetBytes(string.Format(logErrorHeader, DissLogs.CountLogError,
+                    DissLogs.CountLogError - (logs.CountEmpty + logs.Errors.Count(e => !e.IsGood)),
+                    logs.Errors.Count(e => !e.IsGood), logs.CountEmpty));
+            fstream.Write(array, 0, array.Length);
+            // Вывод запись ошибок
+            for (int i = 0; i < logs.Errors.Count; i++)
+            {
+                array = Encoding.Default.GetBytes((i + 1) + ";" + logs.Errors[i].ToString() + "\n");
+                fstream.Write(array, 0, array.Length);
+            }
+            if (writeFullTime)
+            {
+                foreach (var t in logs.Times)
+                {
+                    array = Encoding.Default.GetBytes(t.ToString(writeFullTime) + "\n");
                     fstream.Write(array, 0, array.Length);
+                }
+            }
+            fstream.Close();
+            try
+            {
+                // Если не получается создать/открыть файл, то не создаем исключение!
+                fstream = new FileStream("LogErrorDescription.txt", FileMode.Create);
                 // LogError Description
                 array = Encoding.Default.GetBytes(DissLogs.LogError.LogNote.LogNoteHeader + "\n");
                 fstream.Write(array, 0, array.Length);
@@ -372,32 +415,17 @@ namespace Diss
                     array = Encoding.Default.GetBytes(i.ToString() + "\n");
                     fstream.Write(array, 0, array.Length);
                 }
-                // Всего прочитано записей: {0}, корректных {1}, свободных {2}, ошибочных {3}\n
-                array = Encoding.Default.GetBytes(string.Format(logErrorHeader, DissLogs.CountLogError,
-                        DissLogs.CountLogError - (logs.CountEmpty + logs.Errors.Count(e => !e.IsGood)),
-                        logs.CountEmpty, logs.Errors.Count(e => !e.IsGood)));
-                fstream.Write(array, 0, array.Length);
-                // Вывод запись ошибок
-                for (int i = 0; i < logs.Errors.Count; i++)
-                {
-                    array = Encoding.Default.GetBytes((i + 1) + ";" + logs.Errors[i].ToString() + "\n");
-                    fstream.Write(array, 0, array.Length);
-                }
-                if (writeFullTime)
-                {
-                    foreach (var t in logs.Times)
-                    {
-                        array = Encoding.Default.GetBytes(t.ToString(writeFullTime) + "\n");
-                        fstream.Write(array, 0, array.Length);
-                    }
-                }
+            }
+            finally
+            {
+                fstream?.Close();
             }
             return 0;
         }
         // Ф-ция для записи DissLogs в файл csv.
         // В отличии от предыдущей ф-ции берет имя файла из logs.Name.
         public static int WriteToCsv(DissLogs logs, uint buildFpga = 0x01234567,
-                    DateTime buildPc = new DateTime(), string buildMc = "0")
+                    DateTime buildPc = new DateTime(), string buildMc = "")
         {
             return WriteToCsv(logs, logs.Name + ".csv", buildFpga, buildPc, buildMc);
         }

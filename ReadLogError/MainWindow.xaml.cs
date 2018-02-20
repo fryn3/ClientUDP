@@ -27,6 +27,7 @@ namespace ReadLogError
     /// </summary>
     public partial class MainWindow : Window
     {
+        public static List<RoutedCommand> MyHotkey;
         private static IPAddress remoteIPAddress;
         private static int remotePort;
         private static int localPort;
@@ -52,6 +53,26 @@ namespace ReadLogError
             btn.Add(BtnVersionFPGA);
             btn.Add(BtnLogErrors);
             btn.Add(BtnLogClear);
+            MyHotkey = new List<RoutedCommand>();
+            MyHotkey.Add(new RoutedCommand());
+            MyHotkey[MyHotkey.Count - 1].InputGestures.Add(new KeyGesture(Key.F1));
+            CommandBindings.Add(new CommandBinding(MyHotkey[MyHotkey.Count - 1], ShowMessage_Executed));
+            MyHotkey.Add(new RoutedCommand());
+            MyHotkey[MyHotkey.Count - 1].InputGestures.Add(new KeyGesture(Key.D1, ModifierKeys.Alt));
+            CommandBindings.Add(new CommandBinding(MyHotkey[MyHotkey.Count - 1], BtnVersion_Click));
+            MyHotkey.Add(new RoutedCommand());
+            MyHotkey[MyHotkey.Count - 1].InputGestures.Add(new KeyGesture(Key.D2, ModifierKeys.Alt));
+            CommandBindings.Add(new CommandBinding(MyHotkey[MyHotkey.Count - 1], BtnVersionFPGA_Click));
+            MyHotkey.Add(new RoutedCommand());
+            MyHotkey[MyHotkey.Count - 1].InputGestures.Add(new KeyGesture(Key.D3, ModifierKeys.Alt));
+            CommandBindings.Add(new CommandBinding(MyHotkey[MyHotkey.Count - 1], BtnLogErrors_Click));
+            MyHotkey.Add(new RoutedCommand());
+            MyHotkey[MyHotkey.Count - 1].InputGestures.Add(new KeyGesture(Key.D4, ModifierKeys.Alt));
+            CommandBindings.Add(new CommandBinding(MyHotkey[MyHotkey.Count - 1], BtnLogClear_Click));
+            MyHotkey.Add(new RoutedCommand());
+            MyHotkey[MyHotkey.Count - 1].InputGestures.Add(new KeyGesture(Key.Escape));
+            CommandBindings.Add(new CommandBinding(MyHotkey[MyHotkey.Count - 1], BtnExit_Click));
+
         }
 
         private void ShowMessage_Executed(object sender, RoutedEventArgs e)
@@ -103,9 +124,9 @@ namespace ReadLogError
         private async void BtnLogErrors_Click(object sender, RoutedEventArgs e)
         {
             BtnVersion_Click(sender, e);
-            await Task.Delay(100);
+            await Task.Delay(1000);
             BtnVersionFPGA_Click(sender, e);
-            await Task.Delay(100);
+            await Task.Delay(1000);
             btn.ForEach(x => x.IsEnabled = false);
             BtnLogErrors.IsEnabled = true;
             byte[][] ethRx = new byte[8][];
@@ -138,21 +159,42 @@ namespace ReadLogError
                 }
                 TbLogErrors.Text = i.ToString();
             }
-            using (FileStream fstream = new FileStream(fileOutBin, FileMode.OpenOrCreate))
+            FileStream fstream = null;
+            try
             {
+                fstream = new FileStream(fileOutBin, FileMode.OpenOrCreate);
                 for (int i = 0; i < logPage.Length; i++)
                 {
                     fstream.Write(logPage[i], 0, logPage[i].Length);
                 }
             }
-            btn.ForEach(x => x.IsEnabled = true);
+            catch
+            {
+                TbLogErrors.Text = "Can't create LogErrors.bin!";
+                return;
+            }
+            finally
+            {
+                btn.ForEach(x => x.IsEnabled = true);
+                fstream?.Close();
+            }
             TbLogErrors.Text = "Create LogErrors.bin!";
-
-            DissLogs logs = new DissLogs(fileOutBin);
-            WorkWithLogs.WriteToCsv(logs, buildFpga, Properties.VersionInfo.BuildDate, buildMc);
-            Process.Start(logs.Name + ".csv");
+            try
+            {
+                DissLogs logs = new DissLogs(fileOutBin);
+                WorkWithLogs.WriteToCsv(logs, buildFpga, Properties.VersionInfo.BuildDate, buildMc);
+                Process.Start(logs.Name + ".csv");
+            }
+            catch (Exception ex)
+            {
+                TbLogErrors.Text = ex.Message;
+                return;
+            }
+            finally
+            {
+                flBtnBusy--;
+            }
             TbLogErrors.Text = "Create LogErrors.csv!";
-            flBtnBusy--;
         }
 
         private async void BtnLogClear_Click(object sender, RoutedEventArgs e)
@@ -201,19 +243,5 @@ namespace ReadLogError
         {
             Close();
         }
-    }
-
-    public static class UserCommands
-    {
-        static UserCommands()
-        {
-            // Можно прописать горячие клавиши по умолчанию
-            InputGestureCollection inputs = new InputGestureCollection();
-            inputs.Add(new KeyGesture(Key.S, ModifierKeys.Control, "Ctrl+S"));
-
-            SomeCommand = new RoutedUICommand("Some", "SomeCommand", typeof(UserCommands), inputs);
-        }
-
-        public static RoutedCommand SomeCommand { get; private set; }
     }
 }
