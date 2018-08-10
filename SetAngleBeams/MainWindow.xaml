@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:SetAngleBeams"
         xmlns:col="clr-namespace:System.Collections;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="MainWindow" Height="300" Width="450" MinHeight="300" MinWidth="450">
+        Title="MainWindow" Height="300" Width="470" MinHeight="300" MinWidth="450">
     <Grid>
         <!--<Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"></ColumnDefinition>

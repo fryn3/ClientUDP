@@ -53,9 +53,9 @@ namespace Diss
         static Int16 AngleToInt16(double angl) { return (Int16)(angl * 512); }
         static UInt16 AngleSetCs(Int16 aInt16)
         {
-            return (UInt16)((aInt16 & 0xF)
+            return (UInt16)((~((aInt16 & 0xF)
                 + ((aInt16 >> 4) & 0xF)
-                + ((aInt16 >> 8) & 0xF));
+                + ((aInt16 >> 8) & 0xF))) & 0xF);
         }
         static UInt16 AngleRaw(Int16 aInt16) { return (UInt16)((aInt16 << 4) | AngleSetCs(aInt16)); }
         static bool AngleIsGood(UInt16 aRaw)

@@ -27,6 +27,44 @@ namespace SetAngleBeams
     /// </summary>
     public partial class MainWindow : Window
     {
+        public enum PanelComandEnum : byte
+        {
+            FLAG_PANEL_MIN = 0xA0 - 1,  // НЕ КОМАНДА! флаг минимальной команды.
+
+            PANEL_BUILD_MK,             // A0 отправляет версию МК
+            PANEL_RK_IN,                // A1 отправляет RK_IN
+            PANEL_RK_OUT_SET,           // A2 выставляет RK_OUT (светодиоды)  (только в техн)
+            PANEL_RK_OUT_GET,           // A3 отправка RK_OUT (светодиоды)
+            PANEL_INDEX_MODULATION_SET, // A4 выставляет индекс модуляции
+            PANEL_INDEX_MODULATION_GET, // A5 отправляет индекс модуляции
+            PANEL_TEMPERATURE,          // A6 отправляет температуру 3х датчиков
+            PANEL_TEMPERATURE_RAW,      // A7 отправляет значение АЦП 3х датчиков
+            PANEL_LOG_ERROR_GET,        // A8 отправляет 1 Кб журнала отказа
+            PANEL_LOG_ERROR_CLEAR,      // A9 очищает журнал отказа
+            PANEL_DOPLER_GET,           // AA отправляет смещение по 4ем лучам
+            PANEL_none,                 // AB пустышка
+            PANEL_MAIN_MODE_SET,        // * AC выход в боевой
+            PANEL_MAIN_MODE_GET,        // AD возвращаем режим работы
+            PANEL_BUILD_FPGA,           // AE отправка версию FPGA
+            PANEL_TEST_SIGNAL_SET,      // AF Установка тестового сигнала
+            PANEL_TEST_SIGNAL_GET,      // B0 Запросить параметр тестового сигнала
+            PANEL_N_RAY_SET,            // B1 Установка номер луча
+            PANEL_N_RAY_GET,            // B2 Прочитать статус номер луча
+            PANEL_LVTTL_OUT_SET,        // B3 Установить выходные LVTTL
+            PANEL_LVTTL_OUT_GET,        // B4 Запросить состояние выходных LVTTL
+            PANEL_LVTTL_IN,             // B5 Запросить состояние входных LVTTL
+            PANEL_40_80_SET,            // B6 Выставить плис в режиме 40/80
+            PANEL_40_80_GET,            // B7 Запрос режима плис
+            PANEL_GO_TO_ERROR,          // B8 переходи в отказ, только в боевом
+            PANEL_TECH_MODE_SET,        // B9 "запрет СС, запрет ЖуО, запрет перехода 40/80" in 1 byte
+            PANEL_TECH_MODE_GET,        // BA "запрет СС, запрет ЖуО, запрет перехода 40/80" in 1 byte
+            PANEL_ANGLE_ALL_SET,        // BB Выставление углов
+            PANEL_ANGLE_ALL_GET,        // BC Прочитать значение углов всех лучей
+            PANEL_TEMP_KALIB_SET,       // BD Выставить калибровачные данные для темп датчиков
+            PANEL_TEMP_KALIB_GET,       // BE Прочитать калибровачные данные для темп датчиков
+
+            FLAG_PANEL_MAX              // Не команда! флаг макс команды
+        };
         private static IPAddress remoteIPAddress;
         private static int remotePort;
         private static int localPort;
@@ -99,9 +137,10 @@ namespace SetAngleBeams
 
         private async void BtnVersion_Click(object sender, RoutedEventArgs e)
         {
+            //lInfo.Content = "В версии А этой команды нет";
             btn.ForEach(x => x.IsEnabled = false);
             BtnVersion.IsEnabled = true;
-            byte[] datagram = { 0xA0 };
+            byte[] datagram = { (byte)PanelComandEnum.PANEL_BUILD_MK};
             Send(datagram);
             if (flBtnBusy == 0)
             {
@@ -121,7 +160,7 @@ namespace SetAngleBeams
             BtnOpen.IsEnabled = false;
             BtnRead.IsEnabled = false;
             byte[] datagram = new byte[16 + 1];
-            datagram[0] = 0xBB;
+            datagram[0] = (byte) PanelComandEnum.PANEL_ANGLE_ALL_SET;
             foreach (TableRow row in dataGrid.Items)
             {
                 Array.Copy(
@@ -134,7 +173,7 @@ namespace SetAngleBeams
             }
             Send(datagram);
             byte[] r = await ReceiverAsync();
-            if (!(r[0] == 0xBB && r[1] == 0x55))
+            if (!(r[0] == (byte) PanelComandEnum.PANEL_ANGLE_ALL_SET && r[1] == 0x55))
                 lInfo.Content = "Error";
             else
                 lInfo.Content = "Данные успешно отправлены!";
@@ -158,10 +197,10 @@ namespace SetAngleBeams
             btn.ForEach(x => x.IsEnabled = false);
             BtnRead.IsEnabled = true;
             lInfo.Content = "Read!";
-            byte[] datagram = new byte[] { 0xBC };
+            byte[] datagram = new byte[] { (byte)PanelComandEnum.PANEL_ANGLE_ALL_GET };
             Send(datagram);
             byte[] r = await ReceiverAsync();
-            if (r[0] == 0xBC && r[1] == 0x33 && r.Length == 2)
+            if (r[0] == (byte)PanelComandEnum.PANEL_ANGLE_ALL_GET && r[1] == 0x33 && r.Length == 2)
             {
                 lInfo.Content = "Error";
             } else if (r.Length == 17)
