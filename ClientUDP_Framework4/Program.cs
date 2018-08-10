@@ -110,6 +110,7 @@ namespace UdpSample
                             Console.Write('0');
                         }
                     }
+                    mass_list.Remove(readline);
                     mass_list.Add(readline);
                     //byte[] read_byte = new byte[4];
                     byte[] read_byte = new byte[readline.Length / 2 + readline.Length % 2];
