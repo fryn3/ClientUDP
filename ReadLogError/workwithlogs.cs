@@ -94,11 +94,15 @@ namespace Diss
                     logNotes.Add(new LogNote(++i, "LOG_ERR_FLASH", "ошибка при записи/чтении"));
                     logNotes.Add(new LogNote(++i, "LOG_ERR_ARINC", "none"));
                     logNotes.Add(new LogNote(++i, "LOG_ERR_N_RAY", "номер луча"));
-                    i = 20;
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_80TO40", "ошибка перехода с 80 на 40"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_40TO40", "ошибка перехода с 40 на 80"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_EEPROM", "ошибка при работе с EEPROM"));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_OTHER", "ошибки в прошивке. Они не должны происходить."));
+                    logNotes.Add(new LogNote(++i, "LOG_ERR_CALIBR_CS", "не совпадение CS"));
+                    i = 0x80;
                     logNotes.Add(new LogNote(++i, "LOG_MEM_MISS_INF", "потерян сигнал"));
-                    logNotes.Add(new LogNote(++i, "LOG_MEM_START_INIT", "вход в стартовый контроль"));
-                    logNotes.Add(new LogNote(++i, "LOG_MEM_INH_TEST", "вход в расширенный контроль"));
                     logNotes.Add(new LogNote(++i, "LOG_MEM_SILENCE", "выключение СВЧМ"));
+                    logNotes.Add(new LogNote(++i, "LOG_MEM_START_CONTROL", "вход в расширенный/стартовый контроль"));
                 }
             }
 
